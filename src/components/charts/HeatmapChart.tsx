@@ -102,8 +102,8 @@ export default function HeatmapChart({ records, isDark }: Props) {
         </svg>
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-3 mt-3">
+      {/* Legend — always LTR so low=left, high=right matches the gradient direction */}
+      <div className="flex items-center gap-3 mt-3" dir="ltr">
         <span className="text-gray-400 dark:text-slate-500 text-xs">נמוך</span>
         <div className="flex-1 h-2 rounded-full" style={{
           background: heatLegendGradient(isDark)
