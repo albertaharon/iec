@@ -56,9 +56,12 @@ export function parseIECFile(csvText: string, fileName: string): ParsedData {
     throw new Error('Could not find data section in CSV. Is this an IEC export file?')
   }
 
+  const MAX_RECORDS = 200_000 // ~34 years of 15-min data
   const records: MeterRecord[] = []
 
   for (let i = dataStartIdx; i < rows.length; i++) {
+    if (records.length >= MAX_RECORDS) break
+
     const row = rows[i]
     if (!row || row.length < 5) continue
 
@@ -69,8 +72,11 @@ export function parseIECFile(csvText: string, fileName: string): ParsedData {
 
     if (!dateStr.match(/^\d{2}\/\d{2}\/\d{4}$/) || !timeStr.match(/^\d{2}:\d{2}$/)) continue
 
-    const consumption = parseFloat(consumptionStr) || 0
-    const feedIn = parseFloat(feedInStr) || 0
+    const rawConsumption = parseFloat(consumptionStr)
+    const rawFeedIn = parseFloat(feedInStr)
+    // Reject NaN/Infinity and negative values; cap at 1000 kWh per interval (far above any real meter)
+    const consumption = isFinite(rawConsumption) ? Math.min(Math.max(0, rawConsumption), 1000) : 0
+    const feedIn = isFinite(rawFeedIn) ? Math.min(Math.max(0, rawFeedIn), 1000) : 0
 
     records.push({
       date: parseDate(dateStr),

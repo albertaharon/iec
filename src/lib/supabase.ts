@@ -15,7 +15,9 @@ export async function archiveUpload(file: File): Promise<void> {
   if (!supabase) return
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-  const path = `${timestamp}_${file.name}`
+  // Strip path traversal and non-safe characters from the filename
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/\.{2,}/g, '_')
+  const path = `${timestamp}_${safeName}`
 
   const { error } = await supabase.storage
     .from(BUCKET)

@@ -27,6 +27,10 @@ jobs:
 
       - run: npm ci
 
+      - name: Audit production dependencies
+        # --omit=dev excludes build-tool vulns (esbuild CORS – dev-server only, no production impact)
+        run: npm audit --omit=dev --audit-level=high
+
       - name: Build
         run: npm run build
         env:

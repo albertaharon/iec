@@ -12,9 +12,16 @@ export default function UploadZone({ onParsed }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
 
+  const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+
   const processFile = useCallback(async (file: File) => {
-    if (!file.name.endsWith('.csv')) {
+    const allowedMime = ['text/csv', 'text/plain', 'application/csv', 'application/vnd.ms-excel', '']
+    if (!file.name.endsWith('.csv') || (!allowedMime.includes(file.type) && file.type !== '')) {
       setError('אנא העלה קובץ CSV שיוצא מאתר חברת החשמל.')
+      return
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      setError(`הקובץ גדול מדי (${(file.size / 1024 / 1024).toFixed(1)} MB). הגודל המקסימלי הוא 10 MB.`)
       return
     }
     setLoading(true)
