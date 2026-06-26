@@ -10,27 +10,30 @@ interface Props {
   isDark: boolean
 }
 
-const makeTooltip = (isDark: boolean) =>
-  ({ active, payload, label }: { active?: boolean; payload?: { value: number }[]; label?: string }) => {
+export default function HourlyProfileChart({ profile, isDark }: Props) {
+  const maxAvg = Math.max(...profile.map(h => h.avgKwh))
+
+  const CustomTooltip = ({ active, payload, label }: {
+    active?: boolean
+    payload?: { value?: number }[]
+    label?: string
+  }) => {
     if (!active || !payload?.length) return null
+    const val = payload[0]?.value ?? 0
     return (
       <div className="bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700
                       rounded-xl px-4 py-2 text-sm shadow-xl">
         <p className="text-gray-600 dark:text-slate-300 font-medium">{label}</p>
-        <p className="font-bold" style={{ color: heatColor(payload[0]!.value, payload[0]!.value, isDark) }}>
-          {payload[0]!.value.toFixed(3)} kWh ממוצע
+        <p className="font-bold" style={{ color: heatColor(val, maxAvg, isDark) }}>
+          {val.toFixed(3)} kWh ממוצע
         </p>
       </div>
     )
   }
 
-export default function HourlyProfileChart({ profile, isDark }: Props) {
-  const maxAvg = Math.max(...profile.map(h => h.avgKwh))
-
   return (
     <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
       <h2 className="text-gray-900 dark:text-slate-200 font-semibold mb-4">פרופיל שעתי ממוצע</h2>
-      {/* Charts always render LTR */}
       <div dir="ltr">
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={profile} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
@@ -49,7 +52,7 @@ export default function HourlyProfileChart({ profile, isDark }: Props) {
               unit=" kWh"
               width={68}
             />
-            <Tooltip content={makeTooltip(isDark)} cursor={{ fill: 'var(--chart-cursor)' }} />
+            <Tooltip content={<CustomTooltip />} cursor={{ fill: 'var(--chart-cursor)' }} />
             <Bar dataKey="avgKwh" radius={[3, 3, 0, 0]}>
               {profile.map((h, i) => (
                 <Cell
