@@ -61,7 +61,7 @@ export default function Dashboard({ data, isDark, onReset }: Props) {
             <span className="text-2xl">⚡</span>
             <div>
               <h1 className="text-gray-900 dark:text-white font-semibold text-sm leading-tight">
-                {data.metadata.customerName || 'לוח מחוון חשמל'}
+                {data.metadata.customerName || 'צריכת חשמל'}
               </h1>
               <p className="text-gray-500 dark:text-slate-500 text-xs truncate max-w-xs">
                 {data.metadata.address}

@@ -50,7 +50,7 @@ export default function UploadZone({ onParsed }: Props) {
       <div className="mb-10 text-center">
         <div className="text-6xl mb-4">⚡</div>
         <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-          לוח מחוון צריכת חשמל
+          צריכת חשמל
         </h1>
         <p className="text-gray-500 dark:text-slate-400 text-lg">
           העלה את קובץ ייצוא המונה מחברת החשמל ולצפות בניתוח הצריכה שלך
@@ -111,22 +111,9 @@ export default function UploadZone({ onParsed }: Props) {
         </div>
       )}
 
-      {/* Instructions */}
-      <div className="mt-10 w-full max-w-lg bg-white dark:bg-slate-900/60 rounded-xl p-5
-                      border border-gray-200 dark:border-slate-800">
-        <h3 className="text-gray-700 dark:text-slate-300 font-semibold mb-3 text-sm uppercase tracking-wide">
-          איך לייצא מחברת החשמל
-        </h3>
-        <ol className="text-gray-500 dark:text-slate-400 text-sm space-y-1.5 list-decimal list-inside">
-          <li>היכנס ל-<span className="text-gray-700 dark:text-slate-300">https://www.iec.co.il</span></li>
-          <li>עבור ל: <span className="text-gray-700 dark:text-slate-300">החשבון שלי ← קריאות מונה</span></li>
-          <li>בחר טווח תאריכים והורד כ-CSV</li>
-          <li>העלה את הקובץ כאן</li>
-        </ol>
-        <p className="mt-3 text-gray-400 dark:text-slate-500 text-xs">
-          הקובץ מעובד מקומית בדפדפן שלך · עותק מועלה לבעל האתר לצרכי ניפוי שגיאות.
-        </p>
-      </div>
+      <p className="mt-6 text-gray-400 dark:text-slate-500 text-xs text-center">
+        הקובץ מעובד מקומית בדפדפן שלך · עותק מועלה לבעל האתר לצרכי ניפוי שגיאות
+      </p>
     </div>
   )
 }

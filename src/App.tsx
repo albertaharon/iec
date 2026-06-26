@@ -5,7 +5,7 @@ import Dashboard from './components/Dashboard'
 
 export default function App() {
   const [parsedData, setParsedData] = useState<ParsedData | null>(null)
-  const [isDark, setIsDark] = useState(false)
+  const [isDark, setIsDark] = useState(true)
 
   useEffect(() => {
     if (isDark) {
