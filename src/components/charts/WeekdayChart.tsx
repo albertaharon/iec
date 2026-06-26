@@ -1,6 +1,6 @@
 import {
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
-  ResponsiveContainer, Tooltip,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+  ResponsiveContainer, Tooltip, Cell,
 } from 'recharts'
 import type { WeekdayProfile } from '../../types'
 
@@ -23,36 +23,42 @@ const CustomTooltip = ({ active, payload, label }: {
 }
 
 export default function WeekdayChart({ profile }: Props) {
-  // Reorder from Sun to Sat (Sunday first for Israeli context)
   const ordered = [...profile].sort((a, b) => a.dayIndex - b.dayIndex)
+  const max = Math.max(...ordered.map(d => d.avgDaily))
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
       <h2 className="text-slate-200 font-semibold mb-4">Average by Day of Week</h2>
       <ResponsiveContainer width="100%" height={260}>
-        <RadarChart data={ordered} margin={{ top: 10, right: 30, bottom: 10, left: 30 }}>
-          <PolarGrid stroke="#334155" />
-          <PolarAngleAxis
+        <BarChart data={ordered} margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
+          <XAxis
             dataKey="day"
             tick={{ fill: '#94a3b8', fontSize: 12 }}
+            axisLine={{ stroke: '#334155' }}
+            tickLine={false}
           />
-          <PolarRadiusAxis
-            angle={30}
-            tick={{ fill: '#64748b', fontSize: 10 }}
-            tickCount={4}
+          <YAxis
+            tick={{ fill: '#94a3b8', fontSize: 11 }}
+            axisLine={false}
+            tickLine={false}
+            unit=" kWh"
+            width={68}
           />
-          <Radar
-            dataKey="avgDaily"
-            stroke="#22c55e"
-            fill="#22c55e"
-            fillOpacity={0.25}
-            strokeWidth={2}
-          />
-          <Tooltip content={<CustomTooltip />} />
-        </RadarChart>
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: '#1e293b' }} />
+          <Bar dataKey="avgDaily" radius={[4, 4, 0, 0]}>
+            {ordered.map((d, i) => (
+              <Cell
+                key={i}
+                fill={d.avgDaily === max ? '#f59e0b' : '#22c55e'}
+                fillOpacity={0.85}
+              />
+            ))}
+          </Bar>
+        </BarChart>
       </ResponsiveContainer>
       <p className="text-slate-500 text-xs mt-2">
-        Average daily kWh per weekday · only meaningful with multiple weeks of data
+        Average daily kWh per weekday · peak day highlighted in amber
       </p>
     </div>
   )

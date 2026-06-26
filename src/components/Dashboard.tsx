@@ -1,4 +1,6 @@
-import type { Analytics, ParsedData } from '../types'
+import { useState, useMemo } from 'react'
+import type { ParsedData } from '../types'
+import { computeAnalytics } from '../lib/analytics'
 import StatCard from './StatCard'
 import DailyChart from './charts/DailyChart'
 import HourlyProfileChart from './charts/HourlyProfileChart'
@@ -8,7 +10,6 @@ import PeakDaysTable from './PeakDaysTable'
 
 interface Props {
   data: ParsedData
-  analytics: Analytics
   onReset: () => void
 }
 
@@ -17,7 +18,28 @@ function fmtDate(iso: string) {
   return `${dd}/${mm}/${yyyy}`
 }
 
-export default function Dashboard({ data, analytics, onReset }: Props) {
+export default function Dashboard({ data, onReset }: Props) {
+  const allDates = useMemo(() => {
+    const s = new Set(data.records.map(r => r.date))
+    return [...s].sort()
+  }, [data.records])
+
+  const minDate = allDates[0] ?? ''
+  const maxDate = allDates[allDates.length - 1] ?? ''
+
+  const [startDate, setStartDate] = useState(minDate)
+  const [endDate, setEndDate] = useState(maxDate)
+
+  const filteredRecords = useMemo(() =>
+    data.records.filter(r => r.date >= startDate && r.date <= endDate),
+    [data.records, startDate, endDate]
+  )
+
+  const analytics = useMemo(() =>
+    computeAnalytics(filteredRecords.length > 0 ? filteredRecords : data.records),
+    [filteredRecords, data.records]
+  )
+
   const {
     totalKwh, dateRange, daysOfData, averageDaily,
     dailySummaries, hourlyProfile, weekdayProfile,
@@ -58,11 +80,50 @@ export default function Dashboard({ data, analytics, onReset }: Props) {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-8 space-y-8">
-        {/* Date range banner */}
-        <div className="text-center text-slate-400 text-sm">
-          Showing{' '}
-          <span className="text-slate-200 font-medium">{daysOfData} days</span>
-          {' '}of data · {fmtDate(dateRange.start)} → {fmtDate(dateRange.end)}
+        {/* Date range banner + selector */}
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="text-slate-400 text-sm flex-1">
+              File covers{' '}
+              <span className="text-slate-200 font-medium">{allDates.length} days</span>
+              {' '}· {fmtDate(minDate)} → {fmtDate(maxDate)}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-slate-500 text-xs whitespace-nowrap">Show range:</span>
+              <input
+                type="date"
+                value={startDate}
+                min={minDate}
+                max={endDate}
+                onChange={e => setStartDate(e.target.value)}
+                className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm
+                           text-slate-200 focus:outline-none focus:border-cyan-500"
+              />
+              <span className="text-slate-500 text-xs">→</span>
+              <input
+                type="date"
+                value={endDate}
+                min={startDate}
+                max={maxDate}
+                onChange={e => setEndDate(e.target.value)}
+                className="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-sm
+                           text-slate-200 focus:outline-none focus:border-cyan-500"
+              />
+              {(startDate !== minDate || endDate !== maxDate) && (
+                <button
+                  onClick={() => { setStartDate(minDate); setEndDate(maxDate) }}
+                  className="text-xs text-cyan-400 hover:text-cyan-300 underline whitespace-nowrap"
+                >
+                  Reset
+                </button>
+              )}
+            </div>
+          </div>
+          {(startDate !== minDate || endDate !== maxDate) && (
+            <p className="text-slate-500 text-xs mt-2">
+              Showing {daysOfData} of {allDates.length} days · {fmtDate(dateRange.start)} → {fmtDate(dateRange.end)}
+            </p>
+          )}
         </div>
 
         {/* Stat cards */}
@@ -127,7 +188,7 @@ export default function Dashboard({ data, analytics, onReset }: Props) {
         <DailyChart summaries={dailySummaries} average={averageDaily} />
 
         {/* Heatmap */}
-        <HeatmapChart records={data.records} />
+        <HeatmapChart records={filteredRecords.length > 0 ? filteredRecords : data.records} />
 
         {/* Hourly + weekday side by side */}
         <div className={`grid gap-6 ${showWeekday ? 'lg:grid-cols-2' : ''}`}>

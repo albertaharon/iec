@@ -4,31 +4,37 @@ interface Props {
   records: MeterRecord[]
 }
 
-function lerp(a: number, b: number, t: number) {
-  return a + (b - a) * t
+// 5-stop color scale: navy → teal → green → yellow → red
+function heatColor(val: number, max: number): string {
+  if (max === 0) return '#0f172a'
+  const t = Math.min(val / max, 1)
+
+  const stops = [
+    [15, 23, 42],    // 0.0 — navy (no usage)
+    [14, 116, 144],  // 0.25 — teal
+    [22, 163, 74],   // 0.5 — green
+    [234, 179, 8],   // 0.75 — yellow
+    [220, 38, 38],   // 1.0 — red
+  ] as const
+
+  const scaled = t * (stops.length - 1)
+  const lo = Math.floor(scaled)
+  const hi = Math.min(lo + 1, stops.length - 1)
+  const tt = scaled - lo
+
+  const [r, g, b] = [0, 1, 2].map(i =>
+    Math.round(stops[lo]![i] + (stops[hi]![i] - stops[lo]![i]) * tt)
+  ) as [number, number, number]
+
+  return `rgb(${r},${g},${b})`
 }
 
-// Color: dark slate (low) → cyan (mid) → amber (high)
-function heatColor(val: number, max: number): string {
-  if (max === 0) return '#1e293b'
-  const t = Math.min(val / max, 1)
-  if (t < 0.5) {
-    const tt = t * 2
-    const r = Math.round(lerp(30, 6, tt))
-    const g = Math.round(lerp(41, 182, tt))
-    const b = Math.round(lerp(59, 212, tt))
-    return `rgb(${r},${g},${b})`
-  } else {
-    const tt = (t - 0.5) * 2
-    const r = Math.round(lerp(6, 245, tt))
-    const g = Math.round(lerp(182, 158, tt))
-    const b = Math.round(lerp(212, 11, tt))
-    return `rgb(${r},${g},${b})`
-  }
+function fmtDateShort(iso: string) {
+  const [yyyy, mm, dd] = iso.split('-')
+  return `${dd}/${mm}/${yyyy?.slice(2)}`
 }
 
 export default function HeatmapChart({ records }: Props) {
-  // Build date × hour grid
   const dateSet = new Set(records.map(r => r.date))
   const dates = [...dateSet].sort()
 
@@ -43,8 +49,6 @@ export default function HeatmapChart({ records }: Props) {
   const maxVal = allVals.length ? Math.max(...allVals) : 1
 
   const hours = Array.from({ length: 24 }, (_, i) => i)
-
-  // Limit to last 60 days if data is large
   const visibleDates = dates.slice(-60)
 
   const cellW = Math.max(8, Math.min(18, Math.floor(900 / visibleDates.length)))
@@ -77,11 +81,9 @@ export default function HeatmapChart({ records }: Props) {
 
           {/* Cells */}
           {visibleDates.map((date, di) => {
-            const [yyyy, mm, dd] = date.split('-')
-            const label = `${dd}/${mm}/${yyyy?.slice(2)}`
+            const label = fmtDateShort(date)
             return (
               <g key={date}>
-                {/* Date label every N days */}
                 {di % Math.max(1, Math.floor(visibleDates.length / 10)) === 0 && (
                   <text
                     x={48 + di * cellW + cellW / 2}
@@ -95,6 +97,7 @@ export default function HeatmapChart({ records }: Props) {
                 )}
                 {hours.map(h => {
                   const val = grid.get(`${date}-${h}`) ?? 0
+                  const [yyyy, mm, dd] = date.split('-')
                   return (
                     <rect
                       key={h}
@@ -105,7 +108,7 @@ export default function HeatmapChart({ records }: Props) {
                       rx={1}
                       fill={heatColor(val, maxVal)}
                     >
-                      <title>{`${date} ${String(h).padStart(2, '0')}:00 — ${val.toFixed(3)} kWh`}</title>
+                      <title>{`${dd}/${mm}/${yyyy} ${String(h).padStart(2, '0')}:00 — ${val.toFixed(3)} kWh`}</title>
                     </rect>
                   )
                 })}
@@ -119,7 +122,7 @@ export default function HeatmapChart({ records }: Props) {
       <div className="flex items-center gap-3 mt-3">
         <span className="text-slate-500 text-xs">Low</span>
         <div className="flex-1 h-2 rounded-full" style={{
-          background: 'linear-gradient(to right, #1e293b, #06b6d4, #f59e0b)'
+          background: 'linear-gradient(to right, #0f172a, #0e7490, #16a34a, #eab308, #dc2626)'
         }} />
         <span className="text-slate-500 text-xs">High</span>
       </div>
