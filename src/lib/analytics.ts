@@ -1,6 +1,6 @@
 import type { Analytics, DailySummary, HourlyProfile, MeterRecord, WeekdayProfile } from '../types'
 
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const WEEKDAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת']
 
 export function computeAnalytics(records: MeterRecord[]): Analytics {
   // Group by date

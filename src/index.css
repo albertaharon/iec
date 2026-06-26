@@ -4,16 +4,39 @@
 
 @layer base {
   body {
-    @apply bg-slate-950 text-slate-100 antialiased;
+    @apply bg-gray-50 text-gray-900 antialiased;
+  }
+  .dark body {
+    @apply bg-slate-950 text-slate-100;
+  }
+
+  :root {
+    --chart-grid: #e2e8f0;
+    --chart-axis: #64748b;
+    --chart-cursor: #f1f5f9;
+    --chart-axis-line: #cbd5e1;
+  }
+
+  .dark {
+    --chart-grid: #1e293b;
+    --chart-axis: #94a3b8;
+    --chart-cursor: #1e293b;
+    --chart-axis-line: #334155;
   }
 
   ::-webkit-scrollbar {
     @apply w-1.5 h-1.5;
   }
   ::-webkit-scrollbar-track {
+    @apply bg-gray-100;
+  }
+  .dark ::-webkit-scrollbar-track {
     @apply bg-slate-900;
   }
   ::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 rounded-full;
+  }
+  .dark ::-webkit-scrollbar-thumb {
     @apply bg-slate-600 rounded-full;
   }
 }

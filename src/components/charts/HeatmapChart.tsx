@@ -1,32 +1,9 @@
 import type { MeterRecord } from '../../types'
+import { heatColor, heatLegendGradient } from '../../lib/colors'
 
 interface Props {
   records: MeterRecord[]
-}
-
-// 5-stop color scale: navy → teal → green → yellow → red
-function heatColor(val: number, max: number): string {
-  if (max === 0) return '#0f172a'
-  const t = Math.min(val / max, 1)
-
-  const stops = [
-    [15, 23, 42],    // 0.0 — navy (no usage)
-    [14, 116, 144],  // 0.25 — teal
-    [22, 163, 74],   // 0.5 — green
-    [234, 179, 8],   // 0.75 — yellow
-    [220, 38, 38],   // 1.0 — red
-  ] as const
-
-  const scaled = t * (stops.length - 1)
-  const lo = Math.floor(scaled)
-  const hi = Math.min(lo + 1, stops.length - 1)
-  const tt = scaled - lo
-
-  const [r, g, b] = [0, 1, 2].map(i =>
-    Math.round(stops[lo]![i] + (stops[hi]![i] - stops[lo]![i]) * tt)
-  ) as [number, number, number]
-
-  return `rgb(${r},${g},${b})`
+  isDark: boolean
 }
 
 function fmtDateShort(iso: string) {
@@ -34,7 +11,7 @@ function fmtDateShort(iso: string) {
   return `${dd}/${mm}/${yyyy?.slice(2)}`
 }
 
-export default function HeatmapChart({ records }: Props) {
+export default function HeatmapChart({ records, isDark }: Props) {
   const dateSet = new Set(records.map(r => r.date))
   const dates = [...dateSet].sort()
 
@@ -45,8 +22,11 @@ export default function HeatmapChart({ records }: Props) {
     grid.set(key, (grid.get(key) ?? 0) + r.consumption)
   }
 
-  const allVals = [...grid.values()]
-  const maxVal = allVals.length ? Math.max(...allVals) : 1
+  const allVals = [...grid.values()].filter(v => v > 0)
+  // Use 95th percentile as effective max so colors spread across most of the data
+  const sortedVals = [...allVals].sort((a, b) => a - b)
+  const p95idx = Math.floor(sortedVals.length * 0.95)
+  const maxVal = sortedVals[p95idx] ?? (sortedVals[sortedVals.length - 1] ?? 1)
 
   const hours = Array.from({ length: 24 }, (_, i) => i)
   const visibleDates = dates.slice(-60)
@@ -57,13 +37,17 @@ export default function HeatmapChart({ records }: Props) {
   const svgWidth = cellW * visibleDates.length + 48
   const svgHeight = cellH * 24 + 32
 
+  const axisColor = isDark ? '#64748b' : '#94a3b8'
+  const emptyColor = isDark ? '#0f172a' : '#f1f5f9'
+
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5">
-      <h2 className="text-slate-200 font-semibold mb-1">Usage Heatmap</h2>
-      <p className="text-slate-500 text-xs mb-4">
-        Each column = one day · each row = one hour · color = kWh consumed
+    <div className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-2xl p-5">
+      <h2 className="text-gray-900 dark:text-slate-200 font-semibold mb-1">מפת חום צריכה</h2>
+      <p className="text-gray-400 dark:text-slate-500 text-xs mb-4">
+        כל עמודה = יום · כל שורה = שעה · צבע = kWh שנצרך
       </p>
-      <div className="overflow-x-auto">
+      {/* SVG heatmap is always LTR */}
+      <div className="overflow-x-auto" dir="ltr">
         <svg width={svgWidth} height={svgHeight} style={{ display: 'block' }}>
           {/* Hour labels */}
           {hours.map(h => (
@@ -73,7 +57,7 @@ export default function HeatmapChart({ records }: Props) {
               y={h * cellH + cellH / 2 + 28 + 4}
               textAnchor="end"
               fontSize={9}
-              fill="#64748b"
+              fill={axisColor}
             >
               {String(h).padStart(2, '0')}
             </text>
@@ -90,7 +74,7 @@ export default function HeatmapChart({ records }: Props) {
                     y={18}
                     textAnchor="middle"
                     fontSize={8}
-                    fill="#64748b"
+                    fill={axisColor}
                   >
                     {label}
                   </text>
@@ -106,7 +90,7 @@ export default function HeatmapChart({ records }: Props) {
                       width={cellW - 1}
                       height={cellH - 1}
                       rx={1}
-                      fill={heatColor(val, maxVal)}
+                      fill={val > 0 ? heatColor(val, maxVal, isDark) : emptyColor}
                     >
                       <title>{`${dd}/${mm}/${yyyy} ${String(h).padStart(2, '0')}:00 — ${val.toFixed(3)} kWh`}</title>
                     </rect>
@@ -120,11 +104,11 @@ export default function HeatmapChart({ records }: Props) {
 
       {/* Legend */}
       <div className="flex items-center gap-3 mt-3">
-        <span className="text-slate-500 text-xs">Low</span>
+        <span className="text-gray-400 dark:text-slate-500 text-xs">נמוך</span>
         <div className="flex-1 h-2 rounded-full" style={{
-          background: 'linear-gradient(to right, #0f172a, #0e7490, #16a34a, #eab308, #dc2626)'
+          background: heatLegendGradient(isDark)
         }} />
-        <span className="text-slate-500 text-xs">High</span>
+        <span className="text-gray-400 dark:text-slate-500 text-xs">גבוה</span>
       </div>
     </div>
   )
