@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "iec-dashboard",
+      "runtimeExecutable": "/bin/sh",
+      "runtimeArgs": ["start-dev.sh"],
+      "port": 5173,
+      "autoPort": true
+    }
+  ]
+}
